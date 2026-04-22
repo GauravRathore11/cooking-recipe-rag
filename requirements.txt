@@ -3,3 +3,4 @@ chromadb
 ollama
 google-genai 
 python-dotenv
+streamlit
