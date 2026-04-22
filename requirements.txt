@@ -1,0 +1,5 @@
+pandas 
+chromadb 
+ollama
+google-genai 
+python-dotenv
