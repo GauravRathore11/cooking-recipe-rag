@@ -18,22 +18,22 @@ Rules you MUST follow:
 RECIPE_OUTPUT_FORMAT = """
 OUTPUT FORMAT (follow this exactly):
 
-🍽️ **Recipe: <Title>**
+ **Recipe: <Title>**
 
-📝 **Description:**
+ **Description:**
 A 1-2(only) sentence summary of the dish.
 
-🥗 **Ingredients:**
+ **Ingredients:**
 - ingredient 1
 - ingredient 2
 - ... (list all)
 
-👨‍🍳 **Instructions:**
+ **Instructions:**
 1. Step one
 2. Step two
 3. ... (numbered steps)
 
-💡 **Chef's Tips:**
+ **Chef's Tips:**
 - Any helpful substitution or cooking tips based on the user's ingredients.
 """
 

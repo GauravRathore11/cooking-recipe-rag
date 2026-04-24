@@ -2,3 +2,4 @@ dataset
 recipe_db
 .env
 __pycache__
+vector_db_recipe
