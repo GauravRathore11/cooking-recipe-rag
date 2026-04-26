@@ -5,7 +5,7 @@ load_dotenv()
 
 TOP_K_RESULTS = int(os.getenv('TOP_K_RESULTS'))
 
-# ─── RAG: Retrieve Relevant Recipes ──────────────────────────────────────────
+
 
 def search_recipes(collection, query: str, n_results: int = TOP_K_RESULTS):
     results = collection.query(

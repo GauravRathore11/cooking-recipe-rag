@@ -1,5 +1,4 @@
-dataset
-recipe_db
-.env
+backend/dataset
+backend/vector_db_recipe
+backend/.env
 __pycache__
-vector_db_recipe

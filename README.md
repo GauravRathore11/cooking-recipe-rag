@@ -1,349 +1,342 @@
-# 🍳 Cooking Recipe RAG - AI-Powered Kitchen Assistant
+# Cooking Recipe RAG - AI-Powered Kitchen Assistant
 
-## 📋 Project Overview
+## Project Overview
 
-**Cooking Recipe RAG** is an intelligent recipe recommendation system that uses **Retrieval-Augmented Generation (RAG)** to help users find recipes based on ingredients they have or dishes they want to cook. The system combines a vector database for semantic search with a local AI model to provide personalized, context-aware recipe suggestions with detailed instructions.
+Cooking Recipe RAG is a full-stack web application that uses Retrieval-Augmented Generation (RAG) to help users discover recipes. Users can type in ingredients they have on hand or the name of a dish, and the system retrieves relevant recipes from a vector database, then passes them to a local LLM which generates a well-formatted, context-aware response.
+
+The application also allows users to add their own recipes through the web interface. New recipes are stored in both the vector database and the source CSV file, making them immediately searchable.
 
 ### Key Features
-- 🔍 **Semantic Search**: Finds recipes similar to user queries using embeddings
-- 🤖 **AI-Powered Responses**: Uses local LLM to generate formatted, personalized recipe suggestions
-- 💾 **Vector Database**: Stores recipe embeddings for fast similarity-based retrieval
-- 🏠 **Local & Privacy-First**: All processing happens locally (Ollama + ChromaDB)
-- 📝 **Clean Data Pipeline**: Automated data preparation and cleaning workflow
-- 🎯 **Interactive CLI**: User-friendly command-line interface for recipe queries
+
+- Semantic search over a recipe dataset using vector embeddings
+- Streaming AI responses powered by a local LLM via Ollama
+- Web-based chat interface for recipe queries
+- Add Recipe form to contribute new recipes to the database
+- Fully local and offline -- no cloud APIs required after initial model download
+- Automated data cleaning pipeline
 
 ---
 
-## 🛠️ Tools & Technologies Used
+## Tools and Technologies
 
 | Component | Tool | Purpose |
 |-----------|------|---------|
-| **LLM** | [Ollama](https://ollama.ai/) | Local language model for recipe generation (qwen2.5:1.5b) |
-| **Embeddings** | Ollama (nomic-embed-text) | Semantic embeddings for recipe similarity search |
-| **Vector Database** | [ChromaDB](https://www.trychroma.com/) | Stores and retrieves recipe embeddings |
-| **Data Processing** | [Pandas](https://pandas.pydata.org/) | Data cleaning and transformation |
-| **LLM Client** | [ollama-py](https://github.com/ollama/ollama-python) | Python client for Ollama |
-| **Environment** | [python-dotenv](https://github.com/theskumar/python-dotenv) | Environment variable management |
-| **UI Framework** | [Streamlit](https://streamlit.io/) | (Optional) Web-based interface for the bot |
-| **Google AI** | [google-genai](https://github.com/google/generative-ai-python) | (Optional) Integration with Google GenAI |
+| Backend Framework | Flask | REST API server, serves frontend, handles SSE streaming |
+| CORS | Flask-CORS | Cross-origin request handling |
+| LLM | Ollama (qwen2.5:1.5b) | Local language model for generating recipe responses |
+| Embeddings | Ollama (nomic-embed-text) | Generates vector embeddings for semantic search |
+| Vector Database | ChromaDB | Stores and retrieves recipe embeddings locally |
+| Data Processing | Pandas | CSV loading, cleaning, and transformation |
+| Environment Config | python-dotenv | Loads configuration from .env file |
+| Frontend | HTML, CSS, JavaScript | Chat UI and Add Recipe form (vanilla, no framework) |
+| Font | Inter (Google Fonts) | Typography for the web interface |
 
-### Dependencies
+### Python Dependencies (requirements.txt)
+
 ```
-pandas              - Data manipulation and analysis
-chromadb            - Vector database for embeddings
-ollama              - Local LLM and embeddings
-google-genai        - Google AI integration (optional)
-python-dotenv       - Environment configuration
-streamlit           - Web UI framework (optional)
+pandas
+chromadb
+ollama
+google-genai
+python-dotenv
+streamlit
+flask
+flask-cors
 ```
+
+Note: `google-genai` and `streamlit` are listed in requirements.txt but are not actively used in the current version of the application. The core dependencies are pandas, chromadb, ollama, flask, flask-cors, and python-dotenv.
 
 ---
 
-## 🔄 Project Flow & Architecture
-
-### System Architecture
+## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    USER INTERACTION                         │
-│              (CLI: _03_ask_ai.py)                          │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-                    User Query Input
-                           │
-        ┌──────────────────┴──────────────────┐
-        │   Query Cleaning (Remove Stopwords) │
-        └──────────────────┬──────────────────┘
-                           │
-        ┌──────────────────▼──────────────────┐
-        │  SEMANTIC SEARCH (ChromaDB)         │
-        │  Embedding: nomic-embed-text        │
-        │  (Similarity Search)                │
-        └──────────────────┬──────────────────┘
-                           │
-        ┌──────────────────▼──────────────────┐
-        │  RETRIEVE TOP-K RECIPES             │
-        │  (Default: Top 5 matches)           │
-        └──────────────────┬──────────────────┘
-                           │
-        ┌──────────────────▼──────────────────┐
-        │  LLM GENERATION (Ollama)            │
-        │  Model: qwen2.5:1.5b                │
-        │  Input: Context + User Query        │
-        └──────────────────┬──────────────────┘
-                           │
-        ┌──────────────────▼──────────────────┐
-        │  STREAM FORMATTED RESPONSE          │
-        │  (Real-time output to terminal)     │
-        └──────────────────┬──────────────────┘
-                           │
-                    Formatted Recipe
-                    with Instructions
+                    +---------------------------+
+                    |      User (Browser)       |
+                    +---------------------------+
+                               |
+                    HTTP (GET / POST, SSE stream)
+                               |
+                    +---------------------------+
+                    |   Flask Server (app.py)   |
+                    |   - Serves frontend       |
+                    |   - /api/chat  (POST)     |
+                    |   - /api/recipe (POST)    |
+                    +---------------------------+
+                         |             |
+             +-----------+             +-----------+
+             |                                     |
+    +------------------+                 +-------------------+
+    |  RAG Pipeline    |                 |  Add Recipe       |
+    |  (_03_rag.py)    |                 |  (_05_add_recipe) |
+    +------------------+                 +-------------------+
+             |                                     |
+    +------------------+                           |
+    |  Query Cleaning  |                           |
+    |  (functions.py)  |                           |
+    +------------------+                           |
+             |                                     |
+    +--------------------------------------------------+
+    |              ChromaDB (vector_db_recipe/)         |
+    |              Embedding: nomic-embed-text          |
+    +--------------------------------------------------+
+             |
+    +------------------+
+    |  Ollama LLM      |
+    |  qwen2.5:1.5b    |
+    |  (localhost:11434)|
+    +------------------+
+             |
+      Streamed response
+      back to browser
 ```
 
-### Detailed Workflow Stages
+### How the RAG Pipeline Works
 
-#### **Stage 1: Data Preparation** (`_01_data_prep.ipynb`)
-- **Input**: Raw recipes CSV from `dataset/_01_raw/recipes.csv`
-- **Process**:
-  1. Load raw recipe data using Pandas
-  2. Rename columns: `TranslatedRecipeName` → `title`, `TranslatedIngredients` → `ingredients`, `TranslatedInstructions` → `directions`
-  3. Select relevant columns
-  4. Remove rows with null/missing values
-- **Output**: Cleaned CSV saved to `dataset/_02_cleaned/recipes_cleaned.csv`
-
-#### **Stage 2: Vector Database Population** (`_02_vector_db.py`)
-- **Input**: Cleaned recipes CSV
-- **Process**:
-  1. Initialize ChromaDB persistent client pointing to `vector_db_recipe/`
-  2. Create Ollama embedding function (connects to localhost:11434)
-  3. Delete existing "recipes" collection to avoid conflicts
-  4. Create fresh collection with Ollama embedding function
-  5. Combine title + ingredients into document text
-  6. Add documents and metadata (title, ingredients, instructions) to collection
-  7. Process in batches of 100 to prevent RAM overload
-- **Output**: Vector database with embedded recipes stored locally in `vector_db_recipe/`
-
-#### **Stage 3: Interactive Recipe Assistant** (`_03_ask_ai.py`)
-1. **Connection Phase**:
-   - Connect to existing ChromaDB collection
-   - Verify Ollama is running on localhost:11434
-   
-2. **Query Processing**:
-   - Accept user input (ingredients or dish name)
-   - Clean query: lowercase, remove punctuation, filter stopwords
-   
-3. **Retrieval Phase**:
-   - Use cleaned query as embedding input
-   - Perform semantic search in ChromaDB
-   - Retrieve top 5 most similar recipes with their metadata
-   
-4. **Generation Phase**:
-   - Build RAG prompt with:
-     - Retrieved recipe context
-     - User's original query
-     - System prompt with chef personality
-   - Send to Ollama LLM (qwen2.5:1.5b)
-   
-5. **Response Phase**:
-   - Stream response token-by-token for real-time feedback
-   - Format using predefined output template with emojis
-   - Display to user
-
-#### **Key Processing Components**:
-
-**Query Cleaning** (`clean_query` function):
-- Removes common stopwords (please, can, you, want, etc.)
-- Converts to lowercase
-- Removes punctuation
-- Returns refined query for better semantic matching
-
-**Search Function** (`search_recipes`):
-- Queries ChromaDB with semantic similarity
-- Retrieves top K results (default: 5)
-- Formats results into readable context string
-- Includes title, ingredients, and instructions
-
-**LLM Interaction** (`ask_llm`):
-- Streams response from Ollama for real-time output
-- Uses system prompts to control chef personality
-- Enforces output format with structured template
-- Prevents hallucination by limiting responses to provided context
+1. The user types a query (ingredients or dish name) in the chat interface.
+2. The frontend sends a POST request to `/api/chat` with the query.
+3. The backend cleans the query by removing stopwords and punctuation.
+4. The cleaned query is used to perform a semantic search against ChromaDB, retrieving the top 5 most similar recipes.
+5. The retrieved recipes are injected into a prompt template along with the original user query.
+6. The prompt is sent to the Ollama LLM (qwen2.5:1.5b), which generates a formatted recipe response.
+7. The response is streamed back to the browser token-by-token using Server-Sent Events (SSE).
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 cooking-recipe-rag/
-│
-├── README.md                           # Project documentation
-├── requirements.txt                    # Python dependencies
-├── .gitignore                         # Git ignore rules
-│
-├── dataset/
-│   ├── _01_raw/
-│   │   └── recipes.csv               # Original raw recipe data
-│   │
-│   └── _02_cleaned/
-│       └── recipes_cleaned.csv       # Cleaned & processed recipes
-│
-├── src/
-│   ├── _01_data_prep.ipynb          # Data cleaning & preparation
-│   ├── _02_vector_db.py             # Vector DB creation & population
-│   └── _03_ask_ai.py                # Interactive recipe assistant (main)
-│
-├── utils/
-│   └── prompts.py                   # LLM prompt templates
-│
-└── vector_db_recipe/                # ChromaDB storage
-    ├── chroma.sqlite3               # Vector database
-    └── [collection-uuids]/          # Embedded recipe collections
+|
+|-- README.md
+|-- README.docx
+|-- requirements.txt
+|-- .gitignore
+|
+|-- backend/
+|   |-- app.py                          # Flask server (entry point)
+|   |-- .env                            # Environment variables (not committed)
+|   |
+|   |-- src/
+|   |   |-- _01_data_prep.py            # Cleans raw CSV data
+|   |   |-- _02_vector_db.py            # Embeds recipes into ChromaDB
+|   |   |-- _03_rag.py                  # Semantic search over ChromaDB
+|   |   |-- _04_ask_ai.py               # CLI-based recipe assistant
+|   |   |-- _05_add_recipe.py           # Adds recipes to DB and CSV
+|   |
+|   |-- utils/
+|   |   |-- functions.py                # Shared helpers (DB connection, query cleaning)
+|   |   |-- prompts.py                  # LLM prompt templates
+|   |
+|   |-- dataset/
+|   |   |-- _01_raw/
+|   |   |   |-- recipes.csv             # Original raw recipe data
+|   |   |-- _02_cleaned/
+|   |       |-- recipes_cleaned.csv     # Cleaned and processed recipes
+|   |
+|   |-- vector_db_recipe/               # ChromaDB persistent storage
+|
+|-- frontend/
+    |-- index.html                      # Main HTML page
+    |-- style.css                       # Styling (black/white/grey palette)
+    |-- script.js                       # Chat logic, SSE streaming, add recipe
 ```
 
 ---
 
-## 🚀 How to Use
+## Setup and Installation
 
 ### Prerequisites
-- Python 3.8+
-- Ollama running locally on `localhost:11434`
-- Downloaded models: `qwen2.5:1.5b` and `nomic-embed-text`
 
-### Installation
+- Python 3.8 or higher
+- Ollama installed and available on your system
+- The following Ollama models downloaded:
+  - `qwen2.5:1.5b` (language model)
+  - `nomic-embed-text` (embedding model)
 
-1. **Clone/setup the project**:
+### Step 1: Clone the repository
+
 ```bash
+git clone <repository-url>
 cd cooking-recipe-rag
 ```
 
-2. **Install dependencies**:
+### Step 2: Install Python dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-3. **Start Ollama** (in another terminal):
+### Step 3: Start Ollama
+
+Open a separate terminal and start the Ollama server:
+
 ```bash
 ollama serve
-# Download models if needed:
-# ollama pull qwen2.5:1.5b
-# ollama pull nomic-embed-text
 ```
 
-### Running the Pipeline
+If you haven't downloaded the required models yet:
 
-#### Step 1: Prepare Data (One-time)
 ```bash
-cd src
-jupyter notebook _01_data_prep.ipynb
-# Run all cells to clean the recipe data
+ollama pull qwen2.5:1.5b
+ollama pull nomic-embed-text
 ```
 
-#### Step 2: Build Vector Database (One-time)
+### Step 4: Prepare the dataset (one-time)
+
+Place your raw recipes CSV file at `backend/dataset/_01_raw/recipes.csv`, then run:
+
 ```bash
-cd src
+cd backend/src
+python _01_data_prep.py
+```
+
+This reads the raw CSV, renames columns (TranslatedRecipeName -> title, TranslatedIngredients -> ingredients, TranslatedInstructions -> directions), drops rows with missing values, and saves the cleaned output to `backend/dataset/_02_cleaned/recipes_cleaned.csv`.
+
+### Step 5: Build the vector database (one-time)
+
+```bash
+cd backend/src
 python _02_vector_db.py
-# This will create/populate the local vector database
 ```
 
-#### Step 3: Start the Recipe Assistant
+This reads the cleaned CSV, combines each recipe's title and ingredients into a single document string, and inserts them into ChromaDB in batches of 100. ChromaDB automatically generates embeddings using the nomic-embed-text model via Ollama. The database is stored locally at `backend/vector_db_recipe/`.
+
+### Step 6: Start the application
+
 ```bash
-cd src
-python _03_ask_ai.py
+cd backend
+python app.py
 ```
 
-#### Example Interactions
-```
-🧑‍🍳 You: tomatoes and basil
-🤖 Chef Bot is cooking up a response...
-🍽️ **Recipe: Fresh Tomato Pasta**
-...
-
-🧑‍🍳 You: how to make biryani
-🤖 Chef Bot is cooking up a response...
-🍽️ **Recipe: Biryani**
-...
-
-🧑‍🍳 You: quit
-👋 Happy cooking! Bon appétit!
-```
+Open your browser and go to `http://localhost:5000`. You will see the chat interface.
 
 ---
 
-## 🧠 How RAG Works in This Project
+## Usage
 
-**RAG (Retrieval-Augmented Generation)** combines information retrieval with language generation:
+### Chat (Recipe Search)
 
-1. **Retrieval**: When user enters a query, the system searches for semantically similar recipes in the vector database using embeddings
-2. **Augmentation**: Retrieved recipes serve as factual context for the LLM
-3. **Generation**: The LLM uses this context to generate personalized, accurate responses without hallucinating
+1. Open `http://localhost:5000` in your browser.
+2. Click the "Chat" tab in the sidebar (selected by default).
+3. Type your query in the input field. Examples:
+   - "I have tomatoes and basil"
+   - "how to make biryani"
+   - "chicken with yogurt"
+4. Press Enter or click the send button.
+5. The AI will stream a formatted recipe response in real time.
 
-**Benefits**:
-- ✅ Prevents AI from inventing recipes (grounded in real data)
-- ✅ Provides accurate, relevant recommendations
-- ✅ Works entirely offline with local models
-- ✅ Fast semantic search via vector embeddings
+### Add a Recipe
 
----
+1. Click the "Add Recipe" tab in the sidebar.
+2. Fill in the recipe title, ingredients, and instructions.
+3. Click "Add Recipe".
+4. The recipe is saved to both ChromaDB and the CSV file, and becomes immediately searchable in the chat.
 
-## 🔐 Privacy & Local Processing
+### CLI Mode (Alternative)
 
-This entire system runs **locally** on your machine:
-- **Ollama**: All LLM inference happens on your CPU/GPU
-- **ChromaDB**: Embeddings and vectors stored locally
-- **No cloud API calls**: Complete data privacy
-- **No internet required**: After models are downloaded
+You can also use the recipe assistant from the command line without starting the web server:
 
----
-
-## ⚙️ Configuration
-
-Edit these constants in `src/_03_ask_ai.py` to customize:
-
-```python
-OLLAMA_BASE_URL = "http://localhost:11434"      # Ollama server URL
-EMBEDDING_MODEL = "nomic-embed-text"            # Embedding model
-LLM_MODEL = "qwen2.5:1.5b"                      # LLM model
-CHROMA_DB_PATH = "../vector_db_recipe"          # Vector DB location
-TOP_K_RESULTS = 5                               # Number of retrieved recipes
+```bash
+cd backend/src
+python _04_ask_ai.py
 ```
 
+Type your queries at the prompt. Type `quit`, `exit`, or `q` to stop.
+
 ---
 
-## 📊 Data Flow Summary
+## Detailed Code Walkthrough
+
+### _01_data_prep.py
+
+Reads the raw recipe CSV, renames three columns to standardized names (title, ingredients, directions), drops rows where any of these fields are missing, and writes the result to a cleaned CSV file.
+
+### _02_vector_db.py
+
+Connects to a local ChromaDB instance with persistent storage. Creates an Ollama embedding function pointing to localhost:11434 using the nomic-embed-text model. Deletes any existing "recipes" collection to avoid conflicts, then creates a fresh one. For each recipe, combines title and ingredients into a single document and stores the full metadata (title, ingredients, instructions). Processes in batches of 100 to manage memory.
+
+### _03_rag.py
+
+Contains the `search_recipes` function. Takes a ChromaDB collection and a query string, performs a semantic similarity search, and returns the top K results formatted as a context string. Each result includes the recipe title, ingredients, and instructions.
+
+### _04_ask_ai.py
+
+A standalone CLI application. Connects to ChromaDB on startup, then enters a loop where it accepts user input, cleans the query, searches for matching recipes, builds a RAG prompt, and streams the LLM response to the terminal.
+
+### _05_add_recipe.py
+
+Handles adding new recipes. The `add_recipe` function writes the recipe to both ChromaDB (so it becomes searchable immediately) and appends it to the cleaned CSV file (so it persists across database rebuilds). Each recipe gets a unique ID based on the current timestamp.
+
+### app.py (Flask server)
+
+The main entry point for the web application. Serves the frontend static files and exposes two API endpoints:
+
+- `POST /api/chat` -- Accepts a query, runs it through the RAG pipeline, and streams the LLM response back as Server-Sent Events.
+- `POST /api/recipe` -- Accepts title, ingredients, and instructions, adds the recipe to both ChromaDB and the CSV file.
+
+### utils/functions.py
+
+Contains shared utility functions:
+- `get_recipe_collection()` -- Connects to the existing ChromaDB collection with the Ollama embedding function.
+- `clean_query()` -- Lowercases the input, removes punctuation, and filters out common stopwords to improve search quality.
+
+### utils/prompts.py
+
+Stores all LLM prompt templates:
+- `SYSTEM_PROMPT` -- Instructs the LLM to act as a chef, only use provided context, and avoid hallucination.
+- `RECIPE_OUTPUT_FORMAT` -- Defines the structured output format (title, description, ingredients, instructions, tips).
+- `RAG_QUERY_PROMPT` -- Template that injects the retrieved recipe context and the user query.
+
+### Frontend (index.html, style.css, script.js)
+
+A single-page application with two views controlled by sidebar navigation:
+- Chat view: Displays a conversation-style interface. Messages are streamed from the backend using the Fetch API's ReadableStream to parse SSE data in real time.
+- Add Recipe view: A form that submits recipe data to the backend API.
+
+The design uses a black and white color scheme with the Inter font. The layout is responsive -- the sidebar collapses on smaller screens.
+
+---
+
+## Environment Variables
+
+The backend reads configuration from `backend/.env`:
 
 ```
-Raw Recipes CSV
-      ↓
-   [_01_data_prep.ipynb] ← Clean & rename columns
-      ↓
-Cleaned Recipes CSV
-      ↓
-   [_02_vector_db.py] ← Embed & store in ChromaDB
-      ↓
-Vector Database (ChromaDB)
-      ↓
-   [_03_ask_ai.py] ← Semantic search + LLM generation
-      ↓
-Formatted Recipe to User
+TOP_K_RESULTS = 5
+EMBEDDING_MODEL = nomic-embed-text
+OLLAMA_BASE_URL = http://localhost:11434
+LLM_MODEL = qwen2.5:1.5b
 ```
 
----
-
-## 🐛 Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| "Connection refused" | Make sure Ollama is running: `ollama serve` |
-| "Model not found" | Download required models: `ollama pull qwen2.5:1.5b` |
-| "ChromaDB path not found" | Ensure you've run `_02_vector_db.py` first |
-| "No matching recipes" | Try different keywords; query cleaning may remove all words |
-| "Slow responses" | Reduce `TOP_K_RESULTS` or use a smaller LLM model |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| TOP_K_RESULTS | Number of recipes retrieved per search | 5 |
+| EMBEDDING_MODEL | Ollama model used for embeddings | nomic-embed-text |
+| OLLAMA_BASE_URL | URL where Ollama is running | http://localhost:11434 |
+| LLM_MODEL | Ollama model used for text generation | qwen2.5:1.5b |
 
 ---
 
-## 🎯 Future Enhancements
+## Troubleshooting
 
-- [ ] Web UI with Streamlit
-- [ ] Dietary restrictions filtering (vegan, gluten-free, etc.)
-- [ ] Cooking time estimation
-- [ ] Difficulty level classification
-- [ ] Recipe rating system
-- [ ] Batch ingredient matching
-- [ ] Multi-language support
-
----
-
-## 📝 License
-
-[Add your license here if applicable]
+| Problem | Solution |
+|---------|----------|
+| "Connection refused" when starting the app | Make sure Ollama is running: `ollama serve` |
+| "Model not found" error | Download the required models: `ollama pull qwen2.5:1.5b` and `ollama pull nomic-embed-text` |
+| Vector database not found | Run `python _02_vector_db.py` from the `backend/src/` directory first |
+| No matching recipes returned | Try simpler keywords. The query cleaner removes common words like "please", "can", "recipe", etc. |
+| Slow responses | The LLM runs locally on your hardware. A smaller model or fewer TOP_K_RESULTS may help |
+| Frontend not loading | Make sure you started the server with `python app.py` from the `backend/` directory and are visiting `http://localhost:5000` |
 
 ---
 
-## 👨‍💻 Author
+## Privacy
 
-Created as an AI-powered cooking assistant project using RAG principles and local LLMs.
+Everything runs locally on your machine. Ollama handles all LLM inference on your CPU or GPU. ChromaDB stores all embeddings on disk. No data is sent to any external server. Once the models are downloaded, no internet connection is needed.
 
 ---
 
-**Happy Cooking! 🍽️👨‍🍳**
+## License
+
+This project was created as an academic/personal project. Add your license here if applicable.

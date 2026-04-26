@@ -3,17 +3,19 @@ from chromadb.utils import embedding_functions
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+# Build paths relative to this file's location so it works regardless of CWD
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-CHROMA_DB_PATH = os.getenv("CHROMA_DB_PATH")
+load_dotenv(os.path.join(BASE_DIR, '.env'))
+
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL")
 EMBEDDING_MODEL  = os.getenv('EMBEDDING_MODEL')
-COLLECTION_NAME = os.getenv('COLLECTION_NAME')
 OLLAMA_BASE_URL = os.getenv('OLLAMA_BASE_URL')
 
 
 def get_recipe_collection():
-    db_client = chromadb.PersistentClient(path=CHROMA_DB_PATH)
+    db_path = os.path.join(BASE_DIR, 'vector_db_recipe')
+    db_client = chromadb.PersistentClient(path=db_path)
 
     ollama_ef = embedding_functions.OllamaEmbeddingFunction(
         url=OLLAMA_BASE_URL,
@@ -21,7 +23,7 @@ def get_recipe_collection():
     )
 
     collection = db_client.get_collection(
-        name=COLLECTION_NAME,
+        name='recipes',
         embedding_function=ollama_ef
     )
 
@@ -29,7 +31,7 @@ def get_recipe_collection():
     return collection
 
 
-# ─── Clean Query ─────────────────────────────────────────────────────────────
+
 
 def clean_query(query: str) -> str:
     import re

@@ -4,3 +4,5 @@ ollama
 google-genai 
 python-dotenv
 streamlit
+flask
+flask-cors

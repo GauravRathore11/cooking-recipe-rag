@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-powered cooking recipe assistant using RAG. Get personalized recipe suggestions based on your ingredients.">
+    <title>Recipe RAG — AI Kitchen Assistant</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h1>Recipe RAG</h1>
+        </div>
+
+        <nav class="sidebar-nav">
+            <button class="nav-btn active" id="nav-chat" onclick="switchTab('chat')">
+                Chat
+            </button>
+            <button class="nav-btn" id="nav-add" onclick="switchTab('add')">
+                Add Recipe
+            </button>
+        </nav>
+    </aside>
+
+    <main class="main">
+
+        <section class="view active" id="view-chat">
+            <div class="chat-container" id="chat-container">
+                <div class="message bot-message fade-in">
+                    <div class="message-avatar">AI</div>
+                    <div class="message-bubble">
+                        <p>Hey there! I'm your <strong>AI Kitchen Assistant</strong>. Tell me what ingredients you have or what dish you'd like to cook, and I'll find the perfect recipe for you!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-input-area">
+                <div class="input-wrapper">
+                    <input 
+                        type="text" 
+                        id="chat-input" 
+                        placeholder="e.g. &quot;I have tomatoes and basil&quot; or &quot;how to make biryani&quot;" 
+                        autocomplete="off"
+                    >
+                    <button id="send-btn" onclick="sendMessage()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <section class="view" id="view-add">
+            <div class="form-container">
+                <div class="form-header">
+                    <h2>Add Your Own Recipe</h2>
+                    <p>Share a recipe and it'll become searchable instantly!</p>
+                </div>
+
+                <form id="recipe-form" onsubmit="addRecipe(event)">
+                    <div class="form-group">
+                        <label for="recipe-title">Recipe Title</label>
+                        <input type="text" id="recipe-title" placeholder="e.g. Grandma's Butter Chicken" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="recipe-ingredients">Ingredients</label>
+                        <textarea id="recipe-ingredients" rows="4" placeholder="e.g. 500g chicken, 2 cups yogurt, 1 tbsp butter..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="recipe-instructions">Instructions</label>
+                        <textarea id="recipe-instructions" rows="6" placeholder="e.g. 1. Marinate chicken in yogurt... 2. Heat butter in a pan..." required></textarea>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="submit-btn">
+                        Add Recipe
+                    </button>
+                </form>
+
+                <div class="form-toast" id="form-toast"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

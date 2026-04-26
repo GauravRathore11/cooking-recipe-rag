@@ -1,11 +1,16 @@
 import pandas as pd
 import chromadb
+import os
 
 from chromadb.utils import embedding_functions 
 
+# Build paths relative to this file's location
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 def create_and_populate_db(df):
     print("Initializing local Chroma Vector DB with Ollama...")
-    db_client = chromadb.PersistentClient(path="../vector_db_recipe")
+    db_path = os.path.join(BASE_DIR, 'vector_db_recipe')
+    db_client = chromadb.PersistentClient(path=db_path)
     
     # 1. Point Chroma directly to your local Ollama instance
     ollama_ef = embedding_functions.OllamaEmbeddingFunction(
@@ -61,5 +66,6 @@ def create_and_populate_db(df):
 
 if __name__ == "__main__":
     # Ensure Ollama is running in the background before executing this!
-    recipe_df = pd.read_csv('../dataset/_02_cleaned/recipes_cleaned.csv')
+    csv_path = os.path.join(BASE_DIR, 'dataset', '_02_cleaned', 'recipes_cleaned.csv')
+    recipe_df = pd.read_csv(csv_path)
     db_collection = create_and_populate_db(recipe_df)
